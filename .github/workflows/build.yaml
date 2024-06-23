@@ -1,0 +1,48 @@
+name: Publish to Registry
+on:
+  workflow_dispatch:
+
+env:
+  DOCKER_USERNAME: tiryoh
+  DOCKER_IMAGENAME: autoware-no-cuda
+
+jobs:
+  build-and-deploy:
+    #runs-on: ubuntu-latest
+    runs-on: buildjet-8vcpu-ubuntu-2204
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Login to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.github-token }}
+
+      - name: Prepare Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGENAME }}
+          tags: |
+            type=raw,value={{date 'YYYYMMDDTHHmm'}}
+          flavor: |
+            latest=true
+            prefix=
+            suffix=
+
+      - name: Build and Publish
+        id: docker-build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          outputs: type=image,push=true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
