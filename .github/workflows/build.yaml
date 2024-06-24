@@ -5,6 +5,10 @@ on:
 env:
   DOCKER_USERNAME: tiryoh
   DOCKER_IMAGENAME: autoware-no-cuda
+  
+permissions:
+  packages: write
+  contents: read
 
 jobs:
   build-and-deploy:
